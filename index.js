@@ -5,6 +5,7 @@ const { initializeDBConnection} = require('./data/db.connect.js');
 
 
 const app = express()
+app.use(cors())
 const port = 3000;
 app.use(express.json())
 const videos = require('./routes/videos.router.js');
