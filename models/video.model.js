@@ -9,6 +9,6 @@ const VideosSchema = new Schema({
     description: {type:String, required: "cannot enter details without 'description', please enter all detils of video"}
 })
 
-const Videos = mongoose.model('Videos', VideosSchema);
+const Videos = mongoose.model('Videos', VideosSchema );
 
 module.exports = {Videos}
