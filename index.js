@@ -14,10 +14,12 @@ const port = 3000;
 
 const videos = require('./routes/videos.router.js');
 const likedVideos = require('./routes/likedVideos.router.js');
+const watchLater = require('./routes/watchlater.router.js');
 
 initializeDBConnection();
 app.use('/videos', videos);
 app.use('/likedvideos', likedVideos);
+app.use('/watchlater', watchLater); 
 
 
 
