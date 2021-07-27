@@ -7,7 +7,7 @@ const { Schema } = mongoose;
 const LikedVideosSchema = new Schema({
   user: {type: Schema.Types.ObjectId, ref: 'User'},
   LikedVideosArray: [
-     {LikedVideos:{ type: Schema.Types.ObjectId, ref: "Videos" } }
+     {_id:{ type: Schema.Types.ObjectId, ref: "Videos" } }
 
   ]
 });
