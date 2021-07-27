@@ -1,11 +1,13 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const { Videos } = require("./video.model.js");
+const {User} = require("./user.model")
 const { Schema } = mongoose;
 
 const LikedVideosSchema = new Schema({
+  user: {type: Schema.Types.ObjectId, ref: 'User'},
   LikedVideosArray: [
-     { _id: String,  LikedVideos:{ type: Schema.Types.ObjectId, ref: "Videos" } }
+     {LikedVideos:{ type: Schema.Types.ObjectId, ref: "Videos" } }
 
   ]
 });

@@ -1,4 +1,5 @@
 const express = require('express');
+const { LikedVideos } = require('../models/likedVideos.model.js');
 const router = express.Router();
 const { Watchlater, WatchLater } = require('../models/watchlater.model.js');
 
@@ -33,7 +34,7 @@ router.route('/:watchLaterPlaylistId')
 .get(async(req,res)=> {
     try{
         const {watchLaterPlaylistId} = req.params;
-        const data = await WatchLater.findById(watchLaterPlaylistId).populate("WatchLaterArray.WatchlaterVideos");
+        const data = await WatchLater.findById(watchLaterPlaylistId).populate("WatchLaterArray.WatchLaterVideos");
         if(!data){
              res.status(404).json({success: false, message: "data not found"});
         }else {
@@ -51,12 +52,29 @@ router.route('/:watchLaterPlaylistId')
         const data = await WatchLater.findById(watchLaterPlaylistId);
         await data.WatchLaterArray.push(WatchLaterArray);
         await data.save();
-        const savedData = await WatchLater.findById(watchLaterPlaylistId).populate("WatchlaterArray.WatchlaterVideos");
+        const savedData = await WatchLater.findById(watchLaterPlaylistId).populate("WatchLaterArray.WatchLaterVideos");
         res.json({success: true, watchlaterdata: savedData})
     }catch(error){
         res.status(500).json({success: false, message: "Internal Server Error", errMessage: error.message});
     }
-})
+});
+
+
+router.route('/:watchLaterPlaylistId/:videoId')
+.delete(async(req, res)=> {
+    try {
+        const {watchLaterPlaylistId, videoId} = req.params;
+        const updatedWatchLaterPlaylist = await WatchLater.findById(watchLaterPlaylistId).updateOne(
+            { "WatchLaterArray._id": videoId},
+            {$pull: {WatchLaterArray: {WatchLaterVideos: videoId}}}
+        );
+        const data = await WatchLater.findById(watchLaterPlaylistId).populate("WatchLaterArray.WatchLaterVideos");
+        res.json({success: true, watchlaterdata: data})
+    }catch(error){
+        res.status(500).json({success: false, message: "Internal Server Error", errMessage: error.message});
+
+    }
+});
 
 
 
