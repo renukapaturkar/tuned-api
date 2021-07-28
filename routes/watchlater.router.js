@@ -1,81 +1,127 @@
-const express = require('express');
-const { LikedVideos } = require('../models/likedVideos.model.js');
+const express = require("express");
+const { LikedVideos } = require("../models/likedVideos.model.js");
 const router = express.Router();
-const { Watchlater, WatchLater } = require('../models/watchlater.model.js');
+const { WatchLater } = require("../models/watchlater.model.js");
 
-router.route('/')
-.get(async(req,res)=> {
+router
+  .route("/")
+  .get(async (req, res) => {
     try {
-        const data = await WatchLater.find({});
-        if(!data){
-            res.status(404).json({success: false, message: "data not found"})
-        }else {
-            res.json({success: true, watchlaterdata: data})
-        }
-    }catch(error){
-        res.status(500).json({success: false, message: "Internal Server Error", errMessage: error.message})
+      const user = req.user;
+
+      const data = await WatchLater.findOne({ user: user._id }).populate(
+        "WatchLaterArray._id"
+      );
+      if (!data) {
+        res.status(404).json({ success: false, message: "data not found" });
+      } else {
+        res.status(200).json({ success: true, watchlaterdata: data });
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json({
+          success: false,
+          message: "Internal Server Error",
+          errMessage: error.message,
+        });
     }
-})
+  })
 
-.post(async(req, res)=> {
-    try{
-        const watchlater = req.body;
-        const newItem = new WatchLater(watchlater);
-        const savedVideo = await newItem.save();
-        const savedItems = await WatchLater.findById(savedVideo._id).populate("WatchLaterArray.WatchLaterVideos");
-        res.json({success: true, watchlaterdata: savedItems});
-    }catch(error){
-        res.status(500).json({success: false, message: "Internal Server Error", errMessage: error.message});
-    }
-}); 
-
-
-router.route('/:watchLaterPlaylistId')
-.get(async(req,res)=> {
-    try{
-        const {watchLaterPlaylistId} = req.params;
-        const data = await WatchLater.findById(watchLaterPlaylistId).populate("WatchLaterArray.WatchLaterVideos");
-        if(!data){
-             res.status(404).json({success: false, message: "data not found"});
-        }else {
-            res.json({success: true, watchlaterdata: data})
-        }
-    }catch(error){
-        res.status(500).json({success: false, message: "Internal Server Error", errMessage: error.message});
-    }
-})
-
-.post(async(req, res)=>{
+  .post(async (req, res) => {
     try {
-        const {WatchLaterArray} = req.body;
-        const {watchLaterPlaylistId} = req.params;
-        const data = await WatchLater.findById(watchLaterPlaylistId);
-        await data.WatchLaterArray.push(WatchLaterArray);
-        await data.save();
-        const savedData = await WatchLater.findById(watchLaterPlaylistId).populate("WatchLaterArray.WatchLaterVideos");
-        res.json({success: true, watchlaterdata: savedData})
-    }catch(error){
-        res.status(500).json({success: false, message: "Internal Server Error", errMessage: error.message});
+      const watchlater = req.body;
+      console.log("watchlater", watchlater);
+      user = req.user;
+      const newItem = new WatchLater({
+        user: user._id,
+        WatchLaterArray: [{ _id: watchlater.WatchLaterArray._id }],
+      });
+      const savedItem = await newItem.save();
+      const data = await WatchLater.findOne({ user: user._id }).populate(
+        "WatchLaterArray._id"
+      );
+      console.log("data line 30 ", data);
+      res.status(200).json({ success: true, watchlaterdata: data });
+    } catch (error) {
+      res
+        .status(500)
+        .json({
+          success: false,
+          message: "Internal Server Error",
+          errMessage: error.message,
+        });
     }
+  });
+
+router
+  .route("/:watchLaterId")
+  .get(async (req, res) => {
+    try {
+      const user = req.user;
+      const data = await WatchLater.findOne({ user: user._id }).populate(
+        "WatchLaterArray._id"
+      );
+      if (!data) {
+        res.status(404).json({ success: false, message: "data not found" });
+      } else {
+        res.status(200).json({ success: true, watchlaterdata: data });
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json({
+          success: false,
+          message: "Internal Server Error",
+          errMessage: error.message,
+        });
+    }
+  })
+
+  .post(async (req, res) => {
+    try {
+      const { WatchLaterArray } = req.body;
+      const user = req.user;
+      const data = await WatchLater.findOneAndUpdate(
+        { user: user._id },
+        { $addToSet: { WatchLaterArray: WatchLaterArray } }
+      );
+      const savedData = await WatchLater.findOne({ user: user._id }).populate(
+        "WatchLaterArray._id"
+      );
+      res.status(200).json({ success: true, watchlaterdata: savedData });
+    } catch (error) {
+      res
+        .status(500)
+        .json({
+          success: false,
+          message: "Internal Server Error",
+          errMessage: error.message,
+        });
+    }
+  });
+
+router.route("/:watchLaterPlaylistId/:videoId").delete(async (req, res) => {
+  try {
+    const { watchLaterPlaylistId, videoId } = req.params;
+    const user = req.user;
+    const data = await WatchLater.findOneAndUpdate({
+      user: user._id,
+      $pull: { WatchLaterArray: { _id: videoId } },
+    });
+    const savedData = await WatchLater.findOne({ user: user._id }).populate(
+      "WatchLaterArray._id"
+    );
+    res.status(200).json({ success: true, watchlaterdata: savedData });
+  } catch (error) {
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Internal Server Error",
+        errMessage: error.message,
+      });
+  }
 });
-
-
-router.route('/:watchLaterPlaylistId/:videoId')
-.delete(async(req, res)=> {
-    try {
-        const {watchLaterPlaylistId, videoId} = req.params;
-        const updatedWatchLaterPlaylist = await WatchLater.findById(watchLaterPlaylistId).updateOne(
-            { "WatchLaterArray._id": videoId},
-            {$pull: {WatchLaterArray: {WatchLaterVideos: videoId}}}
-        );
-        const data = await WatchLater.findById(watchLaterPlaylistId).populate("WatchLaterArray.WatchLaterVideos");
-        res.json({success: true, watchlaterdata: data})
-    }catch(error){
-        res.status(500).json({success: false, message: "Internal Server Error", errMessage: error.message});
-
-    }
-});
-
-
 
 module.exports = router;
